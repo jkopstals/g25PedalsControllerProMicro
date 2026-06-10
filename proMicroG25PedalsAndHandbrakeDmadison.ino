@@ -72,9 +72,11 @@ void setup() {
   // ---- Calibration (optional) ----
   // Uncomment and adjust values after running DEBUG_MODE to find your min/max.
   //
-  // pedals.setCalibration(SimRacing::Gas,    { 50, 950 });
-  // pedals.setCalibration(SimRacing::Brake,  { 50, 950 });
-  // pedals.setCalibration(SimRacing::Clutch, { 50, 950 });
+  // pedals.setCalibration(
+  // { 50, 950 },  // Gas
+  // { 50, 950 },  // Brake
+  // { 50, 950 }   // Clutch
+  // );
   // handbrake.setCalibration({ 50, 950 });
 pedals.setCalibration(
   { 980, 125 },  // Gas
