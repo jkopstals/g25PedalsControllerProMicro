@@ -7,7 +7,7 @@
  *    A0 → Throttle   (Rx axis)
  *    A1 → Brake      (Ry axis)
  *    A2 → Clutch     (Rz axis)
- *    A3 → Handbrake  (Throttle slider)
+ *    A3 → Handbrake  (Z axis)
  */
 
 #include <SimRacing.h>
@@ -20,7 +20,7 @@
 // ============================================================
 #define DEBUG_MODE false
 
-// --- Pins (matching your original sketch) ---
+// --- Pins ---
 const int PIN_THROTTLE  = A0;
 const int PIN_BRAKE     = A1;
 const int PIN_CLUTCH    = A2;
@@ -30,23 +30,23 @@ const int PIN_HANDBRAKE = A3;
 SimRacing::LogitechPedals pedals(PIN_THROTTLE, PIN_BRAKE, PIN_CLUTCH);
 SimRacing::Handbrake       handbrake(PIN_HANDBRAKE);
 
-// --- Joystick (same axis layout as your original sketch) ---
+// --- Joystick ---
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
   0, 0,           // no buttons, no hat switches
   false, false,   // no X / Y
-  false,          // no Z
+  true,           // Z → Handbrake
   true,           // Rx → Throttle
   true,           // Ry → Brake
   true,           // Rz → Clutch
   false,          // no rudder
-  true,           // Throttle slider → Handbrake
+  false,          // no throttle slider
   false, false, false
 );
 
 const int ADC_Max     = 1023;
-const bool AlwaysSend = false;  // set true to send every loop regardless of changes
+const bool AlwaysSend = false;
 
 // ============================================================
 
@@ -59,34 +59,25 @@ void setup() {
   Serial.println("THR_R   BRK_R   CLT_R   HB_R  | THR_M   BRK_M   CLT_M   HB_M");
   Serial.println("-------------------------------------------------------------");
 #else
-  Joystick.begin(false);  // disable auto-send; we call sendState() manually
+  Joystick.begin(false);
+  Joystick.setZAxisRange(0, ADC_Max);
   Joystick.setRxAxisRange(0, ADC_Max);
   Joystick.setRyAxisRange(0, ADC_Max);
   Joystick.setRzAxisRange(0, ADC_Max);
-  Joystick.setThrottleRange(0, ADC_Max);
 #endif
 
   pedals.begin();
   handbrake.begin();
 
-  // ---- Calibration (optional) ----
-  // Uncomment and adjust values after running DEBUG_MODE to find your min/max.
-  //
-  // pedals.setCalibration(
-  // { 50, 950 },  // Gas
-  // { 50, 950 },  // Brake
-  // { 50, 950 }   // Clutch
-  // );
-  // handbrake.setCalibration({ 50, 950 });
-pedals.setCalibration(
-  { 980, 125 },  // Gas
-  { 955,   5 },  // Brake
-  { 982,  70 }   // Clutch
-);
-handbrake.setCalibration({ 1023, 0 });
+  pedals.setCalibration(
+    { 980, 125 },  // Gas
+    { 950,   0 },  // Brake
+    { 970,  70 }   // Clutch
+  );
+  handbrake.setCalibration({ 625, 705 });
 
 #if !DEBUG_MODE
-  updateJoystick();  // send initial state on connect
+  updateJoystick();
 #endif
 }
 
@@ -129,9 +120,9 @@ void loop() {
 }
 
 void updateJoystick() {
+  Joystick.setZAxis(handbrake.getPosition(0, ADC_Max));
   Joystick.setRxAxis(pedals.getPosition(SimRacing::Gas,    0, ADC_Max));
   Joystick.setRyAxis(pedals.getPosition(SimRacing::Brake,  0, ADC_Max));
   Joystick.setRzAxis(pedals.getPosition(SimRacing::Clutch, 0, ADC_Max));
-  Joystick.setThrottle(handbrake.getPosition(0, ADC_Max));
   Joystick.sendState();
 }
